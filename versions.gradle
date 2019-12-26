@@ -1,0 +1,29 @@
+ext.deps = [:]
+def versions = [:]
+versions.android_gradle_plugin = '3.5.3'
+versions.fragment = "1.2.0-alpha02"
+versions.arouter_api = "1.5.0"
+versions.arouter_compiler = "1.2.2"
+versions.arouter_register = "1.0.2"
+versions.timber = "4.5.1"
+ext.versions = versions
+
+def deps = [:]
+deps.android_gradle_plugin = "com.android.tools.build:gradle:$versions.android_gradle_plugin"
+deps.fragment_runtime = "androidx.fragment:fragment:${versions.fragment}"
+deps.timber = "com.jakewharton.timber:timber:$versions.timber"
+
+def ARouter = [:]
+ARouter.api = "com.alibaba:arouter-api:$versions.arouter_api"
+ARouter.compiler = "com.alibaba:arouter-compiler:$versions.arouter_compiler"
+ARouter.register = "com.alibaba:arouter-register:$versions.arouter_register"
+deps.ARouter = ARouter
+
+ext.deps= deps
+
+def addRepos(RepositoryHandler handler) {
+    handler.google()
+    handler.jcenter()
+    handler.maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+}
+ext.addRepos = this.&addRepos

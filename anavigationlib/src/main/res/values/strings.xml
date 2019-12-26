@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">anavigationlib</string>
+    <item name="nav_view_tag" type="id" />
+</resources>
