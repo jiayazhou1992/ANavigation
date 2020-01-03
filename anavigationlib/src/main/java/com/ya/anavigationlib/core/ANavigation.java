@@ -28,8 +28,11 @@ import timber.log.Timber;
  */
 public class ANavigation {
 
-    public static void init(Application application) {
-        if (BuildConfig.DEBUG) {
+    private static Class<? extends Activity> mContainerClass;
+
+    public static void init(Application application, boolean debug, Class mClass) {
+        mContainerClass = mClass;
+        if (debug) {
             ARouter.openDebug();
             ARouter.openLog();
 
@@ -81,7 +84,7 @@ public class ANavigation {
     }
 
     public static ANavController findNavController(Activity activity) {
-        return new ANoController(activity);
+        return mContainerClass == null ? new ANoController(activity) : new ANoController(activity, mContainerClass);
     }
 
     private static Activity getActivityFromView(View view) {

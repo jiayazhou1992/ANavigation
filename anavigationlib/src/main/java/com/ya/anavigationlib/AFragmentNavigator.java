@@ -11,7 +11,6 @@ import com.alibaba.android.arouter.launcher.ARouter;
 import com.ya.anavigationlib.core.ANavigator;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 
 /**
  * *****************************
@@ -39,17 +38,22 @@ public class AFragmentNavigator implements ANavigator {
     @Override
     public boolean navigation(String path, Bundle args) {
         //found fragment by aRouter
-        Fragment frag = (Fragment) ARouter.getInstance().build(path).with(args).navigation();
-
-        FragmentTransaction ft = mFragmentManager.beginTransaction();
-        ft.replace(mContainerId, frag);
-        ft.setPrimaryNavigationFragment(frag);
-        if (!mBackStack.isEmpty()) {
-            ft.addToBackStack(generateBackStackName(mBackStack.size() + 1, path));
+        Object navigation = ARouter.getInstance().build(path).with(args).navigation();
+        if (navigation != null) {
+            Fragment frag = (Fragment)navigation;
+            FragmentTransaction ft = mFragmentManager.beginTransaction();
+            ft.replace(mContainerId, frag);
+            ft.setPrimaryNavigationFragment(frag);
+            if (!mBackStack.isEmpty()) {
+                ft.addToBackStack(generateBackStackName(mBackStack.size() + 1, path));
+            }
+            ft.setReorderingAllowed(true);
+            ft.commit();
+            mBackStack.addLast(path);
+            return true;
+        } else {
+            return false;
         }
-        ft.commit();
-        mBackStack.addLast(path);
-        return true;
     }
 
     @Override
