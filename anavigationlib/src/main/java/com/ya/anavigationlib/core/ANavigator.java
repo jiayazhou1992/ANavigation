@@ -1,6 +1,9 @@
 package com.ya.anavigationlib.core;
 
+import android.content.Intent;
 import android.os.Bundle;
+
+import androidx.annotation.Nullable;
 
 /**
  * *****************************
@@ -15,6 +18,8 @@ public interface ANavigator {
     boolean navigation(String path, Bundle args);
 
     boolean popBackStack();
+
+    void dispatchOnActivityResult(int requestCode, int resultCode, @Nullable Intent data);
 
     Bundle onSaveState();
 

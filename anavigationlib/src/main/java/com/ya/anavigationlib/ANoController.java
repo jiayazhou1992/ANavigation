@@ -34,11 +34,17 @@ public class ANoController extends ANavController {
     }
 
     @Override
-    public void navigation(String path, Bundle args) {
+    public boolean navigation(String path, Bundle args) {
         Intent intent = new Intent();
-        intent.setClass(getContext(), ContainerActivity.class);
+        intent.setClass(getContext(), mContainerClass);
         intent.putExtra(KEY_FRAGMENT_PATH, path);
         intent.putExtra(KEY_FRAGMENT_ARGS, args);
         getContext().startActivity(intent);
+        return true;
+    }
+
+    @Override
+    public void popBackStack() {
+        ((Activity)getContext()).finish();
     }
 }

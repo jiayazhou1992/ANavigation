@@ -1,5 +1,6 @@
 package com.ya.anavigationlib;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -21,5 +22,11 @@ public class ContainerActivity extends AppCompatActivity {
 
             ANavigation.findNavController(this, R.id.fragment).navigation(path, args);
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        ANavigation.findNavController(this, R.id.fragment).dispatchOnActivityResult(requestCode, resultCode, data);
     }
 }

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -22,19 +23,17 @@ import java.util.ArrayDeque;
  * @Time 2019/12/25 9:34
  * @DESC *****************************
  */
-public class AFragmentNavigator implements ANavigator {
+public class ADialogFragmentNavigator implements ANavigator {
 
     private final String KEY_BACK_STACK_NAMES = "navigation_backStack_names";
 
     private final Context mContext;
     private final FragmentManager mFragmentManager;
-    private final int mContainerId;
     private ArrayDeque<String> mBackStack = new ArrayDeque<>();
 
-    public AFragmentNavigator(Context mContext, FragmentManager mFragmentManager, int mContainerId) {
+    public ADialogFragmentNavigator(Context mContext, FragmentManager mFragmentManager) {
         this.mContext = mContext;
         this.mFragmentManager = mFragmentManager;
-        this.mContainerId = mContainerId;
     }
 
     @Override
@@ -42,15 +41,8 @@ public class AFragmentNavigator implements ANavigator {
         //found fragment by aRouter
         Object navigation = ARouter.getInstance().build(path).with(args).navigation();
         if (navigation != null) {
-            Fragment frag = (Fragment)navigation;
-            FragmentTransaction ft = mFragmentManager.beginTransaction();
-            ft.replace(mContainerId, frag, generateBackStackName(mBackStack.size() + 1, path));
-            ft.setPrimaryNavigationFragment(frag);
-            if (!mBackStack.isEmpty()) {
-                ft.addToBackStack(generateBackStackName(mBackStack.size() + 1, path));
-            }
-            ft.setReorderingAllowed(true);
-            ft.commit();
+            DialogFragment frag = (DialogFragment)navigation;
+            frag.show(mFragmentManager, generateBackStackName(mBackStack.size() + 1, path));
             mBackStack.addLast(path);
             return true;
         } else {
@@ -66,9 +58,8 @@ public class AFragmentNavigator implements ANavigator {
         if (mFragmentManager.isStateSaved()) {
             return false;
         }
-        mFragmentManager.popBackStack(
-                generateBackStackName(mBackStack.size(), mBackStack.peekLast()),
-                FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        DialogFragment fragment = (DialogFragment) mFragmentManager.findFragmentByTag(generateBackStackName(mBackStack.size(), mBackStack.peekLast()));
+        fragment.dismiss();
         mBackStack.removeLast();
         return true;
     }

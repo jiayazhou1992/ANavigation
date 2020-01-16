@@ -2,6 +2,7 @@ package com.ya;
 
 import android.app.Application;
 
+import com.ya.anavigationlib.BuildConfig;
 import com.ya.anavigationlib.core.ANavigation;
 
 /**
@@ -17,6 +18,6 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        ANavigation.init(this);
+        ANavigation.init(this, BuildConfig.DEBUG, null);
     }
 }

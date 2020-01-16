@@ -72,19 +72,26 @@ public class ANavigation {
         return findNavController(view);
     }
 
+    public static ANavController findNavController(Activity activity) {
+        return findNavController(activity.getWindow().getDecorView().findViewById(android.R.id.content));
+    }
+
     public static ANavController findNavController(View view) {
         ANavController controller = null;
         Object o = view.getTag(R.id.nav_view_tag);
         if (o != null) {
             controller = (ANavController) o;
         } else {
-            controller = new ANoController(getActivityFromView(view));
+            controller = setNoNavController(getActivityFromView(view));
         }
         return controller;
     }
 
-    public static ANavController findNavController(Activity activity) {
-        return mContainerClass == null ? new ANoController(activity) : new ANoController(activity, mContainerClass);
+    private static ANoController setNoNavController(Activity activity) {
+        View contentView = activity.getWindow().getDecorView().findViewById(android.R.id.content);
+        ANoController aNoController = mContainerClass == null ? new ANoController(activity) : new ANoController(activity, mContainerClass);
+        setNavController(contentView, aNoController);
+        return aNoController;
     }
 
     private static Activity getActivityFromView(View view) {

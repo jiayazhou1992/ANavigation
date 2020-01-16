@@ -1,17 +1,17 @@
 package com.ya.anavigationlib.core;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.OnBackPressedDispatcher;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LifecycleOwner;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
 
 import timber.log.Timber;
 
@@ -60,11 +60,11 @@ public class ANavController {
     }
 
 
-    public void navigation(String path) {
-        navigation(path, null);
+    public boolean navigation(String path) {
+        return navigation(path, null);
     }
 
-    public void navigation(String path, Bundle args){
+    public boolean navigation(String path, Bundle args){
         boolean nav = this.mNavigator.navigation(path, args);
         if (nav) {
             ANavBackStackEntry entry = new ANavBackStackEntry(path, args);
@@ -72,6 +72,7 @@ public class ANavController {
         }
         updateBackPressedCallbackEnable();
         Timber.e("mBackStack size %d", mBackStack.size());
+        return nav;
     }
 
     public void popBackStack(){
@@ -92,6 +93,10 @@ public class ANavController {
         } else {
             mOnBackPressedCallback.setEnabled(true);
         }
+    }
+
+    public void dispatchOnActivityResult(int requestCode, int resultCode, @Nullable Intent data){
+        this.mNavigator.dispatchOnActivityResult(requestCode, resultCode, data);
     }
 
     public Bundle saveState() {
