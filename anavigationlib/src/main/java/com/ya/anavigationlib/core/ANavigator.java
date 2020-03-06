@@ -15,7 +15,7 @@ import androidx.annotation.Nullable;
  */
 public interface ANavigator {
 
-    boolean navigation(String path, Bundle args);
+    boolean navigation(String path, Bundle args, Object navigation);
 
     boolean popBackStack();
 

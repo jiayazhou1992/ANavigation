@@ -15,15 +15,18 @@ import android.os.Parcelable;
 public class ANavBackStackEntry implements Parcelable {
     private String mPath;
     private Bundle mArgs;
+    private String mNavigatorName;
 
-    public ANavBackStackEntry(String mPath, Bundle mArgs) {
+    public ANavBackStackEntry(String mPath, Bundle mArgs, String mNavigatorName) {
         this.mPath = mPath;
         this.mArgs = mArgs;
+        this.mNavigatorName = mNavigatorName;
     }
 
     public ANavBackStackEntry(Parcel parcel){
         this.mPath = parcel.readString();
         this.mArgs = parcel.readBundle(getClass().getClassLoader());
+        this.mNavigatorName = parcel.readString();
     }
 
     @Override
@@ -35,6 +38,7 @@ public class ANavBackStackEntry implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(mPath);
         dest.writeBundle(mArgs);
+        dest.writeString(mNavigatorName);
     }
 
     public static final Parcelable.Creator<ANavBackStackEntry> CREATOR =
@@ -49,4 +53,28 @@ public class ANavBackStackEntry implements Parcelable {
                     return new ANavBackStackEntry[size];
                 }
             };
+
+    public String getPath() {
+        return mPath;
+    }
+
+    public void setPath(String mPath) {
+        this.mPath = mPath;
+    }
+
+    public Bundle getArgs() {
+        return mArgs;
+    }
+
+    public void setArgs(Bundle mArgs) {
+        this.mArgs = mArgs;
+    }
+
+    public String getNavigatorName() {
+        return mNavigatorName;
+    }
+
+    public void setNavigatorName(String mNavigatorName) {
+        this.mNavigatorName = mNavigatorName;
+    }
 }

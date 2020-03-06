@@ -9,9 +9,14 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.activity.OnBackPressedDispatcher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.LifecycleOwner;
 
+import com.alibaba.android.arouter.launcher.ARouter;
+
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Map;
 
 import timber.log.Timber;
 
@@ -26,11 +31,13 @@ import timber.log.Timber;
 public class ANavController {
 
     private final String KEY_NAVIGATOR_STATE = "navigator_state";
+//    private static final String KEY_NAVIGATOR_STATE_NAMES = "navigator_state_names";
     private final String KEY_BACK_STACK = "back_stack";
 
     private final Context mContext;
     private ArrayDeque<ANavBackStackEntry> mBackStack = new ArrayDeque<>();
-    private ANavigator mNavigator;
+    private ANavigatorProvider mNavigatorProvider = new ANavigatorProvider();
+//    private ANavigator mNavigator;
 
     private final OnBackPressedCallback mOnBackPressedCallback =
             new OnBackPressedCallback(false) {
@@ -48,8 +55,8 @@ public class ANavController {
         return mContext;
     }
 
-    public void setNavigator(ANavigator aNavigator) {
-        this.mNavigator = aNavigator;
+    public void addNavigator(ANavigator aNavigator) {
+        this.mNavigatorProvider.addNavigator(aNavigator);
     }
 
     public void setOnBackPressedDispatcher(@NonNull LifecycleOwner owner, @NonNull OnBackPressedDispatcher dispatcher) {
@@ -59,15 +66,25 @@ public class ANavController {
         dispatcher.addCallback(owner, mOnBackPressedCallback);
     }
 
-
     public boolean navigation(String path) {
         return navigation(path, null);
     }
 
     public boolean navigation(String path, Bundle args){
-        boolean nav = this.mNavigator.navigation(path, args);
+        String aNavigatorName;
+        ANavigator aNavigator;
+        //found navigation by aRouter
+        Object navigation = ARouter.getInstance().build(path).with(args).navigation();
+        if (navigation instanceof DialogFragment) {
+            aNavigatorName = ANavigatorProvider.DIALOG_FRAGMENT_ANAVIGATOR;
+        } else {
+            aNavigatorName = ANavigatorProvider.FRAGMENT_ANAVIGATOR;
+        }
+        aNavigator = mNavigatorProvider.getANavigator(aNavigatorName);
+
+        boolean nav = aNavigator.navigation(path, args, navigation);
         if (nav) {
-            ANavBackStackEntry entry = new ANavBackStackEntry(path, args);
+            ANavBackStackEntry entry = new ANavBackStackEntry(path, args, aNavigatorName);
             mBackStack.add(entry);
         }
         updateBackPressedCallbackEnable();
@@ -75,11 +92,16 @@ public class ANavController {
         return nav;
     }
 
+    private ANavigator peekLastNavigator() {
+        return this.mNavigatorProvider.getANavigator(mBackStack.peekLast().getNavigatorName());
+    }
+
     public void popBackStack(){
         if (mBackStack.isEmpty()) {
             return;
         }
-        boolean nav = this.mNavigator.popBackStack();
+
+        boolean nav = peekLastNavigator().popBackStack();
         if (nav) {
             mBackStack.removeLast();
         }
@@ -96,12 +118,22 @@ public class ANavController {
     }
 
     public void dispatchOnActivityResult(int requestCode, int resultCode, @Nullable Intent data){
-        this.mNavigator.dispatchOnActivityResult(requestCode, resultCode, data);
+        peekLastNavigator().dispatchOnActivityResult(requestCode, resultCode, data);
     }
 
     public Bundle saveState() {
         Bundle saveState = new Bundle();
-        saveState.putBundle(KEY_NAVIGATOR_STATE, mNavigator.onSaveState());
+
+        Bundle navigatorState = new Bundle();
+        for (Map.Entry<String, ANavigator> entry : mNavigatorProvider.getNavigators().entrySet()) {
+            String name = entry.getKey();
+            Bundle savedState = entry.getValue().onSaveState();
+            if (savedState != null) {
+                navigatorState.putBundle(name, savedState);
+            }
+        }
+        saveState.putBundle(KEY_NAVIGATOR_STATE, navigatorState);
+
         if (!mBackStack.isEmpty()) {
             Parcelable[] parcelables = new Parcelable[mBackStack.size()];
             int index = 0;
@@ -115,7 +147,13 @@ public class ANavController {
 
     public void restoreState(Bundle saveSate) {
         if (saveSate != null) {
-            mNavigator.onRestoreState(saveSate.getBundle(KEY_NAVIGATOR_STATE));
+
+            Bundle navigatorState = saveSate.getBundle(KEY_NAVIGATOR_STATE);
+            for (Map.Entry<String, ANavigator> entry : mNavigatorProvider.getNavigators().entrySet()) {
+                String name = entry.getKey();
+                entry.getValue().onRestoreState(navigatorState.getBundle(name));
+            }
+
             Parcelable[] parcelables = saveSate.getParcelableArray(KEY_BACK_STACK);
             if (parcelables != null) {
                 mBackStack.clear();

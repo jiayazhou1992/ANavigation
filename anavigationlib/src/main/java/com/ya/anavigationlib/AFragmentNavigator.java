@@ -38,9 +38,7 @@ public class AFragmentNavigator implements ANavigator {
     }
 
     @Override
-    public boolean navigation(String path, Bundle args) {
-        //found fragment by aRouter
-        Object navigation = ARouter.getInstance().build(path).with(args).navigation();
+    public boolean navigation(String path, Bundle args, Object navigation) {
         if (navigation != null) {
             Fragment frag = (Fragment)navigation;
             FragmentTransaction ft = mFragmentManager.beginTransaction();

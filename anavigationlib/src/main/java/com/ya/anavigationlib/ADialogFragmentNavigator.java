@@ -4,16 +4,23 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleOwner;
 
 import com.alibaba.android.arouter.launcher.ARouter;
+import com.ya.anavigationlib.core.ANavigation;
 import com.ya.anavigationlib.core.ANavigator;
 
 import java.util.ArrayDeque;
+
+import timber.log.Timber;
 
 /**
  * *****************************
@@ -31,17 +38,31 @@ public class ADialogFragmentNavigator implements ANavigator {
     private final FragmentManager mFragmentManager;
     private ArrayDeque<String> mBackStack = new ArrayDeque<>();
 
+    private LifecycleEventObserver mObserver = new LifecycleEventObserver() {
+        @Override
+        public void onStateChanged(@NonNull LifecycleOwner source, @NonNull Lifecycle.Event event) {
+            if (event == Lifecycle.Event.ON_STOP) {
+                Timber.i(source.getClass().getSimpleName() + "/stop");
+                DialogFragment dialogFragment = (DialogFragment) source;
+                if (!dialogFragment.requireDialog().isShowing()) {
+                    Timber.i(source.getClass().getSimpleName() + "/stop/pop");
+                    ANavigation.findNavController(dialogFragment).popBackStack();
+                }
+            }
+        }
+    };
+
     public ADialogFragmentNavigator(Context mContext, FragmentManager mFragmentManager) {
         this.mContext = mContext;
         this.mFragmentManager = mFragmentManager;
     }
 
     @Override
-    public boolean navigation(String path, Bundle args) {
-        //found fragment by aRouter
-        Object navigation = ARouter.getInstance().build(path).with(args).navigation();
+    public boolean navigation(String path, Bundle args, Object navigation) {
         if (navigation != null) {
             DialogFragment frag = (DialogFragment)navigation;
+            frag.setArguments(args);
+            frag.getLifecycle().addObserver(mObserver);
             frag.show(mFragmentManager, generateBackStackName(mBackStack.size() + 1, path));
             mBackStack.addLast(path);
             return true;
@@ -59,6 +80,7 @@ public class ADialogFragmentNavigator implements ANavigator {
             return false;
         }
         DialogFragment fragment = (DialogFragment) mFragmentManager.findFragmentByTag(generateBackStackName(mBackStack.size(), mBackStack.peekLast()));
+        fragment.getLifecycle().removeObserver(mObserver);
         fragment.dismiss();
         mBackStack.removeLast();
         return true;
@@ -96,12 +118,16 @@ public class ADialogFragmentNavigator implements ANavigator {
                 mBackStack.clear();
                 for (String name : names) {
                     mBackStack.add(name);
+                    DialogFragment fragment = (DialogFragment) mFragmentManager.findFragmentByTag(generateBackStackName(mBackStack.size(), name));
+                    fragment.getLifecycle().addObserver(mObserver);
                 }
             }
         }
     }
 
     private String generateBackStackName(int backStackIndex, String path) {
-        return backStackIndex + "-" + path;
+        String name = backStackIndex + "-" + path;
+        Timber.i(name);
+        return name;
     }
 }

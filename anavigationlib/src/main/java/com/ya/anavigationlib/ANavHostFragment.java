@@ -46,7 +46,8 @@ public class ANavHostFragment extends Fragment implements ANavHost {
         super.onCreate(savedInstanceState);
         Timber.e("onCreate");
         mNavController = new ANavController(requireActivity());
-        mNavController.setNavigator(new AFragmentNavigator(requireActivity(), getChildFragmentManager(), getId()));
+        mNavController.addNavigator(new AFragmentNavigator(requireActivity(), getChildFragmentManager(), getId()));
+        mNavController.addNavigator(new ADialogFragmentNavigator(requireActivity(), getChildFragmentManager()));
         mNavController.setOnBackPressedDispatcher(this, requireActivity().getOnBackPressedDispatcher());
 
         if (savedInstanceState != null) {

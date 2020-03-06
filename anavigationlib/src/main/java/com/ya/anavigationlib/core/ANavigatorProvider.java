@@ -35,4 +35,8 @@ public class ANavigatorProvider {
     public ANavigator getANavigator(String name) {
         return aNavigatorHashMap.get(name);
     }
+
+    public HashMap<String, ANavigator> getNavigators() {
+        return aNavigatorHashMap;
+    }
 }
