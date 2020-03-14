@@ -39,4 +39,8 @@ public class ANavigatorProvider {
     public HashMap<String, ANavigator> getNavigators() {
         return aNavigatorHashMap;
     }
+
+    public void clear() {
+        aNavigatorHashMap.clear();
+    }
 }

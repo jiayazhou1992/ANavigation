@@ -19,6 +19,8 @@ public interface ANavigator {
 
     boolean popBackStack();
 
+    void clear();
+
     void dispatchOnActivityResult(int requestCode, int resultCode, @Nullable Intent data);
 
     Bundle onSaveState();

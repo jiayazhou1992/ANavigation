@@ -34,18 +34,16 @@ public class ADialogFragmentNavigator implements ANavigator {
 
     private final String KEY_BACK_STACK_NAMES = "navigation_backStack_names";
 
-    private final Context mContext;
-    private final FragmentManager mFragmentManager;
+    private Context mContext;
+    private FragmentManager mFragmentManager;
     private ArrayDeque<String> mBackStack = new ArrayDeque<>();
 
     private LifecycleEventObserver mObserver = new LifecycleEventObserver() {
         @Override
         public void onStateChanged(@NonNull LifecycleOwner source, @NonNull Lifecycle.Event event) {
             if (event == Lifecycle.Event.ON_STOP) {
-                Timber.i(source.getClass().getSimpleName() + "/stop");
                 DialogFragment dialogFragment = (DialogFragment) source;
                 if (!dialogFragment.requireDialog().isShowing()) {
-                    Timber.i(source.getClass().getSimpleName() + "/stop/pop");
                     ANavigation.findNavController(dialogFragment).popBackStack();
                 }
             }
@@ -84,6 +82,16 @@ public class ADialogFragmentNavigator implements ANavigator {
         fragment.dismiss();
         mBackStack.removeLast();
         return true;
+    }
+
+    @Override
+    public void clear() {
+        if (mBackStack.isEmpty()) {
+            return;
+        }
+        mBackStack.clear();
+        mContext = null;
+        mFragmentManager = null;
     }
 
     @Override

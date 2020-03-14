@@ -10,12 +10,13 @@ import androidx.activity.OnBackPressedDispatcher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.alibaba.android.arouter.launcher.ARouter;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Map;
 
 import timber.log.Timber;
@@ -34,11 +35,20 @@ public class ANavController {
 //    private static final String KEY_NAVIGATOR_STATE_NAMES = "navigator_state_names";
     private final String KEY_BACK_STACK = "back_stack";
 
-    private final Context mContext;
+    private Context mContext;
     private ArrayDeque<ANavBackStackEntry> mBackStack = new ArrayDeque<>();
     private ANavigatorProvider mNavigatorProvider = new ANavigatorProvider();
-//    private ANavigator mNavigator;
-
+    //宿主生命周期监听
+    private LifecycleEventObserver mObserver = new LifecycleEventObserver() {
+        @Override
+        public void onStateChanged(@NonNull LifecycleOwner source, @NonNull Lifecycle.Event event) {
+            if (event == Lifecycle.Event.ON_STOP) {
+                clear();
+                source.getLifecycle().removeObserver(mObserver);
+            }
+        }
+    };
+    //返回事件监听
     private final OnBackPressedCallback mOnBackPressedCallback =
             new OnBackPressedCallback(false) {
                 @Override
@@ -65,6 +75,11 @@ public class ANavController {
         // Then add it to the new dispatcher
         dispatcher.addCallback(owner, mOnBackPressedCallback);
     }
+
+    public void setLifecycleEventObserver(@NonNull LifecycleOwner owner) {
+        owner.getLifecycle().addObserver(mObserver);
+    }
+
 
     public boolean navigation(String path) {
         return navigation(path, null);
@@ -107,6 +122,15 @@ public class ANavController {
         }
         updateBackPressedCallbackEnable();
         Timber.e("mBackStack size %d", mBackStack.size());
+    }
+
+    public void clear(){
+        if (mBackStack.isEmpty()) {
+            return;
+        }
+        peekLastNavigator().clear();
+        mNavigatorProvider.clear();
+        mContext = null;
     }
 
     public void updateBackPressedCallbackEnable() {

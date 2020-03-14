@@ -49,6 +49,7 @@ public class ANavHostFragment extends Fragment implements ANavHost {
         mNavController.addNavigator(new AFragmentNavigator(requireActivity(), getChildFragmentManager(), getId()));
         mNavController.addNavigator(new ADialogFragmentNavigator(requireActivity(), getChildFragmentManager()));
         mNavController.setOnBackPressedDispatcher(this, requireActivity().getOnBackPressedDispatcher());
+        mNavController.setLifecycleEventObserver(this);
 
         if (savedInstanceState != null) {
             Bundle navState = savedInstanceState.getBundle(KEY_NAV_CON_STATE);

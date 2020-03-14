@@ -11,8 +11,11 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.ya.anavigationlib.core.ANavigator;
+import com.ya.anavigationlib.core.FStackEntry;
 
 import java.util.ArrayDeque;
+
+import timber.log.Timber;
 
 /**
  * *****************************
@@ -24,12 +27,12 @@ import java.util.ArrayDeque;
  */
 public class AFragmentNavigator implements ANavigator {
 
-    private final String KEY_BACK_STACK_NAMES = "navigation_backStack_names";
+    private final String KEY_BACK_STACK_ENTRYS = "navigation_backStack_entrys";
 
-    private final Context mContext;
-    private final FragmentManager mFragmentManager;
+    private Context mContext;
+    private FragmentManager mFragmentManager;
     private final int mContainerId;
-    private ArrayDeque<String> mBackStack = new ArrayDeque<>();
+    private ArrayDeque<FStackEntry> mBackStack = new ArrayDeque<>();
 
     public AFragmentNavigator(Context mContext, FragmentManager mFragmentManager, int mContainerId) {
         this.mContext = mContext;
@@ -40,16 +43,22 @@ public class AFragmentNavigator implements ANavigator {
     @Override
     public boolean navigation(String path, Bundle args, Object navigation) {
         if (navigation != null) {
+
+            FStackEntry fStackEntry = new FStackEntry();
+            fStackEntry.setPath(path);
+            fStackEntry.setTag(generateBackStackName(mBackStack.size() + 1, path));
+
             Fragment frag = (Fragment)navigation;
             FragmentTransaction ft = mFragmentManager.beginTransaction();
-            ft.replace(mContainerId, frag, generateBackStackName(mBackStack.size() + 1, path));
+            ft.replace(mContainerId, frag, fStackEntry.getTag());
             ft.setPrimaryNavigationFragment(frag);
-            if (!mBackStack.isEmpty()) {
-                ft.addToBackStack(generateBackStackName(mBackStack.size() + 1, path));
+            if (!mBackStack.isEmpty()) {//默认第一个都不加入栈
+                ft.addToBackStack(fStackEntry.getTag());
             }
             ft.setReorderingAllowed(true);
             ft.commit();
-            mBackStack.addLast(path);
+            mBackStack.addLast(fStackEntry);
+
             return true;
         } else {
             return false;
@@ -64,11 +73,21 @@ public class AFragmentNavigator implements ANavigator {
         if (mFragmentManager.isStateSaved()) {
             return false;
         }
-        mFragmentManager.popBackStack(
-                generateBackStackName(mBackStack.size(), mBackStack.peekLast()),
-                FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+        FStackEntry fStackEntry = mBackStack.peekLast();
+        mFragmentManager.popBackStack(fStackEntry.getTag(), FragmentManager.POP_BACK_STACK_INCLUSIVE);
         mBackStack.removeLast();
         return true;
+    }
+
+    @Override
+    public void clear() {
+        if (mBackStack.isEmpty()) {
+            return;
+        }
+        mBackStack.clear();
+        mContext = null;
+        mFragmentManager = null;
     }
 
     @Override
@@ -76,19 +95,19 @@ public class AFragmentNavigator implements ANavigator {
         if (mBackStack.isEmpty()) {
             return;
         }
-        mFragmentManager.findFragmentByTag(generateBackStackName(mBackStack.size(), mBackStack.peekLast())).onActivityResult(requestCode, resultCode, data);
+        mFragmentManager.findFragmentByTag( mBackStack.peekLast().getTag()).onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
     public Bundle onSaveState() {
         if (!mBackStack.isEmpty()) {
             Bundle b = new Bundle();
-            String[] names = new String[mBackStack.size()];
+            FStackEntry[] fStackEntries = new FStackEntry[mBackStack.size()];
             int index = 0;
-            for (String name: mBackStack) {
-                names[index++] = name;
+            for (FStackEntry stackEntry: mBackStack) {
+                fStackEntries[index++] = stackEntry;
             }
-            b.putStringArray(KEY_BACK_STACK_NAMES, names);
+            b.putParcelableArray(KEY_BACK_STACK_ENTRYS, fStackEntries);
             return b;
         } else {
             return null;
@@ -98,11 +117,11 @@ public class AFragmentNavigator implements ANavigator {
     @Override
     public void onRestoreState(Bundle saveState) {
         if (saveState != null) {
-            String[] names = saveState.getStringArray(KEY_BACK_STACK_NAMES);
-            if (names != null) {
+            FStackEntry[] fStackEntries = (FStackEntry[]) saveState.getParcelableArray(KEY_BACK_STACK_ENTRYS);
+            if (fStackEntries != null) {
                 mBackStack.clear();
-                for (String name : names) {
-                    mBackStack.add(name);
+                for (FStackEntry stackEntry : fStackEntries) {
+                    mBackStack.add(stackEntry);
                 }
             }
         }
